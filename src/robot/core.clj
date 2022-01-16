@@ -1,19 +1,18 @@
 (ns robot.core
-  (:require [clojure.edn :as edn]
-            [clojure.core.async :as async]
+  (:require [clojure.core.async :as async]
             [discljord.connections :refer [connect-bot! disconnect-bot!]]
-            [discljord.messaging :as d.msg :refer [start-connection! stop-connection!]]
+            [discljord.messaging :refer [stop-connection!]]
             [discljord.events :refer [message-pump!]]
-            [robot.events :refer [event-handler]]))
+            [robot.events :refer [event-handler]]
+            [com.brunobonacci.mulog :as u]
+            [robot.components :refer [config connection]]))
 
-(def config (edn/read-string (slurp "config.edn")))
-(def connection (start-connection! (:token config)))
+(u/start-publisher! {:type :console})
 
 (defn -main
   [& _args]
   (let [channel (async/chan (async/buffer 100))
-        conn-chan (connect-bot! (:token config) channel
-                                :intents #{})]
+        conn-chan (connect-bot! (:token config) channel :intents #{})]
     (message-pump! channel event-handler)
     (stop-connection! connection)
     (disconnect-bot! conn-chan)
