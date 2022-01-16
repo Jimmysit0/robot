@@ -15,7 +15,8 @@
 
 (defmethod event-handler :interaction-create 
   [_ data]
-  (case (:name (:data data))
+  ;; TODO: Use a single multimethod (defmulti) instead of a case, as all the command functions take the same arguments.
+  (case (:name (:data data)) 
     "reverse" (reverse-command data))
   (slash/route-interaction slash-handlers data))
 
