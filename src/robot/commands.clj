@@ -17,8 +17,9 @@
   ["reverse"]
   _data
   [input]
-  (let [{:keys [id token]} _data]
-    (create-interaction-response! connection id token 4 :data {:content (str/reverse input)})))
+  (let [{:keys [id token]} _data
+        response (str "Your original input was: `" input "`, so your reversed input is: " "`"(str/reverse input)"`.")]
+    (create-interaction-response! connection id token 4 :data {:content response})))
 
 (cmd/defpaths command-paths
   reverse-command)
