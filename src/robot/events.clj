@@ -2,7 +2,7 @@
   (:require [com.brunobonacci.mulog :as u]         
             [slash.gateway :refer [gateway-defaults]]
             [slash.core :as slash]
-            [robot.commands :refer [reverse-command command-paths]]))
+            [robot.commands :refer [reverse-command avatar-command command-paths]]))
 
 (defmulti event-handler (fn [type _data] type
                           (u/log ::event :type type)
@@ -17,7 +17,8 @@
   [_ data]
   ;; TODO: Use a single multimethod (defmulti) instead of a case, as all the command functions take the same arguments.
   (case (:name (:data data)) 
-    "reverse" (reverse-command data))
+    "reverse" (reverse-command data)
+    "avatar" (avatar-command data))
   (slash/route-interaction slash-handlers data))
 
 (defmethod event-handler :ready
