@@ -1,6 +1,6 @@
 (ns robot.components
-  (:require [clojure.edn :as edn]
-            [discljord.messaging :refer [start-connection!]]))
+  (:require [discljord.messaging :refer [start-connection!]]
+            [cprop.core :refer [load-config]]))
 
-(def config (edn/read-string (slurp "config.edn")))
-(def connection (start-connection! (:token config)))
+(def config (load-config :file "config.edn"))
+(def connection (start-connection! (config :token)))

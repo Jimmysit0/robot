@@ -44,4 +44,4 @@
   reverse-command
   avatar-command)
 
-(bulk-overwrite-global-application-commands! connection (:application-id config) [all-commands])
+(bulk-overwrite-global-application-commands! connection (config :application-id) [all-commands])

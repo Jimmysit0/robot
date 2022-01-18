@@ -12,7 +12,7 @@
 (defn -main
   [& _args]
   (let [channel (async/chan (async/buffer 100))
-        conn-chan (connect-bot! (:token config) channel :intents #{})]
+        conn-chan (connect-bot! (config :token) channel :intents #{})]
     (message-pump! channel event-handler)
     (stop-connection! connection)
     (disconnect-bot! conn-chan)
