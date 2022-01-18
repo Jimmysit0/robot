@@ -9,8 +9,8 @@
 (def all-commands
   (let [input-option (option "input" "Your input" :string :required true)
         user-option (option "user" "The users" :user :required true)
-        size-option (option "size" "The desired size" :integer :required true :choices (map #(zipmap [:name :value] (repeat %)) [16 32 64 128 256 512 1024 2048 4096]))]
-    (command
+        size-option (option "size" "The desired size" :integer :required true :choices (map #(zipmap [:name :value] (repeat %)) (->> 16 (iterate #(* 2 %)) (take 10))))]
+    [(command
      "reverse"
      "Reverses the input"
      :options
@@ -20,7 +20,7 @@
      "Gets an user avatar"
      :options
      [user-option
-      size-option])))
+      size-option])]))
 
 (cmd/defhandler reverse-command
   ["reverse"]
@@ -44,4 +44,4 @@
   reverse-command
   avatar-command)
 
-(bulk-overwrite-global-application-commands! connection (config :application-id) [all-commands])
+(bulk-overwrite-global-application-commands! connection (config :application-id) all-commands)
