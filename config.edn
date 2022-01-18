@@ -1,3 +1,4 @@
 {:token "token"
  :application-id "app-id"
- :guild-id "guild-id"}
+ :guild-id "guild-id"
+ :logo "logo"}

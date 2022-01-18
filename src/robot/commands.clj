@@ -33,8 +33,12 @@
   ["avatar"]
   {:keys [id token] :as data}
   [user size]
-  (let [user-obj (get-in data [:data :resolved :users user])]
-    (create-interaction-response! connection id token 4 :data {:content (resize (effective-user-avatar user-obj) size)})))
+  (let [user-obj (get-in data [:data :resolved :users user])
+        username (get-in data [:data :resolved :users user :username])
+        avatar (resize (effective-user-avatar user-obj) size)]
+    (create-interaction-response! connection id token 4 :data {:embeds [{:title (format "%s's avatar" username)
+                                                                         :image {:url avatar}
+                                                                         :color 0x4e87e6}]})))
 
 (cmd/defpaths command-paths
   reverse-command
