@@ -2,9 +2,9 @@
  :deps
  {cprop/cprop                         {:mvn/version "0.1.19"}
   org.clojure/clojure                 {:mvn/version "1.10.3"}
-  org.suskalo/discljord               {:mvn/version "1.3.0"}
   com.brunobonacci/mulog              {:mvn/version "0.8.1"}
-  com.github.johnnyjayjay/slash       {:mvn/version "0.3.0-SNAPSHOT"}}
+  com.github.johnnyjayjay/slash       {:mvn/version "0.3.0-SNAPSHOT"}
+  com.github.discljord/discljord      {:mvn/version "1.3.1"}}
  :aliases
  {:run
   {:main-opts ["-m" "robot.core"]}}}
