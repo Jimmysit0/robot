@@ -13,7 +13,7 @@
   [& _args]
   (let [channel (async/chan (async/buffer 100))
         conn-chan (con/connect-bot! (components/config :token) channel :intents #{})]
-    (dsc-events/essage-pump! channel events/event-handler)
+    (dsc-events/message-pump! channel events/event-handler)
     (msg/stop-connection! components/connection)
     (con/disconnect-bot! conn-chan)
     (async/close! channel)))
