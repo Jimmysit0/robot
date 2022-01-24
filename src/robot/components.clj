@@ -1,6 +1,6 @@
 (ns robot.components
-  (:require [discljord.messaging :refer [start-connection!]]
-            [cprop.core :refer [load-config]]))
+  (:require [discljord.messaging :as msg]
+            [cprop.core :as cprop]))
 
-(def config (load-config :file "config.edn"))
-(def connection (start-connection! (config :token)))
+(def config (cprop/load-config :file "config.edn"))
+(def connection (msg/start-connection! (config :token)))

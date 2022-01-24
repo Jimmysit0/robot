@@ -1,19 +1,19 @@
 (ns robot.core
   (:require [clojure.core.async :as async]
-            [discljord.connections :refer [connect-bot! disconnect-bot!]]
-            [discljord.messaging :refer [stop-connection!]]
-            [discljord.events :refer [message-pump!]]
-            [robot.events :refer [event-handler]]
+            [discljord.connections :as con]
+            [discljord.messaging :as msg]
+            [discljord.events :as dsc-events]
+            [robot.events :as events]
             [com.brunobonacci.mulog :as u]
-            [robot.components :refer [config connection]]))
+            [robot.components :as components]))
 
 (u/start-publisher! {:type :console})
 
 (defn -main
   [& _args]
   (let [channel (async/chan (async/buffer 100))
-        conn-chan (connect-bot! (config :token) channel :intents #{})]
-    (message-pump! channel event-handler)
-    (stop-connection! connection)
-    (disconnect-bot! conn-chan)
+        conn-chan (con/connect-bot! (components/config :token) channel :intents #{})]
+    (dsc-events/essage-pump! channel events/event-handler)
+    (msg/stop-connection! components/connection)
+    (con/disconnect-bot! conn-chan)
     (async/close! channel)))
