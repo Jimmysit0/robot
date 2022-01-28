@@ -1,6 +1,6 @@
 (ns robot.events
   (:require [com.brunobonacci.mulog :as u]         
-            [slash.gateway :as gateway]
+            [slash.gateway :as gtw]
             [slash.core :as slash]
             [robot.commands :as cmds]))
 
@@ -11,14 +11,16 @@
 (defmethod event-handler :default [_ _])
 
 (def slash-handlers 
-  (assoc gateway/gateway-defaults :application-command cmds/command-paths))
+  (assoc gtw/gateway-defaults :application-command cmds/command-paths))
 
 (defmethod event-handler :interaction-create 
   [_ data]
   ;; TODO: Use a single multimethod (defmulti) instead of a case, as all the command functions take the same arguments.
   (case (:name (:data data)) 
     "reverse" (cmds/reverse-command data)
-    "avatar" (cmds/avatar-command data))
+    "avatar" (cmds/avatar-command data)
+    "move" (cmds/move-command data)
+    "button" (cmds/button-command data))
   (slash/route-interaction slash-handlers data))
 
 (defmethod event-handler :ready
