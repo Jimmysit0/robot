@@ -16,7 +16,9 @@
         size-option (stc/option "size"
                                    "The desired size" :integer :required true
                                    :choices (map #(zipmap [:name :value] (repeat %)) (->> 16 (iterate #(* 2 %)) (take 9))))
-        channel-option (stc/option "channel" "The desired channel" :channel :required true)]
+        text-channel-option (stc/option "channel"
+                                        "The desired channel" :channel :channel-types [[:guild-text]]
+                                        :required true)]
     [(stc/command
      "reverse"
      "Reverses the input"
@@ -32,10 +34,7 @@
       "move"
       "Moves a conversation to the specified channel"
       :options
-      [channel-option])
-     (stc/command
-      "button"
-      "test")]))
+      [text-channel-option])]))
 
 (cmd/defhandler reverse-command
   ["reverse"] 
@@ -71,18 +70,13 @@
   [channel]
   (let [message-chan (get data :channel-id)
         guild-id (get data :guild-id)]
-    (cond
-      (not guild-id)
+    (if
+        (= channel message-chan)
       (msg/create-interaction-response!
        cmp/connection id token 4
-       :data {:content "Can't run this command in direct messages"})
-
-      (= channel message-chan)
-      (msg/create-interaction-response!
-       cmp/connection id token 4
-       :data {:content "Can't move the conversation to the same channel"})
-
-      :else
+       :data {:embeds [{:description "Can't move the conversation to the same channel"
+                       :color 0x4e87e6}]})
+      
       (let [message-id (get (deref (msg/create-message!
                                     cmp/connection channel
                                     :embed {:description (format "Continuing the conversation from %s"
@@ -93,10 +87,14 @@
          cmp/connection id token 4
          :data {:embeds [{:description (str "Let's continue this conversation in "
                                             (fmt/mention-channel channel)
-                                            " [link]("
+                                            " ([link]("
                                             msg-url
-                                            ")")
-                          :color 0x4e87e6}]}
+                                            "))")
+                          :color 0x4e87e6}]
+         :components [(cmps/action-row
+                       (cmps/link-button
+                        msg-url
+                        :label "Link"))]})
         (let [slash-id (get (deref (msg/get-original-interaction-response!
                                     cmp/connection
                                     (cmp/config :application-id)
@@ -107,27 +105,18 @@
            cmp/connection channel message-id
            :embed {:description (str "Continuing the conversation from "
                                      (fmt/mention-channel message-chan)
-                                     " [link]("
+                                     " ([link]("
                                      slash-url
-                                     ")")
-                   :color 0x4e87e6})))))))
-
-(cmd/defhandler button-command ; purely for testing purposes
-  ["button"]
-  {:keys [id token]}
-  []
-  (msg/create-interaction-response!
-   cmp/connection id token 4
-   :data {:content "test"
-          :components [(cmps/action-row
-                        (cmps/link-button
-                         (str "https://www.google.com/")
-                         :label "link"))]}))
+                                     "))")
+                   :color 0x4e87e6}
+           :components [(cmps/action-row
+                         (cmps/link-button
+                          slash-url
+                          :label "Link"))]))))))
 
 (cmd/defpaths command-paths
   reverse-command
   avatar-command
-  move-command
-  button-command)
+  move-command)
 
 (msg/bulk-overwrite-global-application-commands! cmp/connection (cmp/config :application-id) commands)
