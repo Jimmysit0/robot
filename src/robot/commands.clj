@@ -34,7 +34,10 @@
       "move"
       "Moves a conversation to the specified channel"
       :options
-      [text-channel-option])]))
+      [text-channel-option])
+     (stc/command
+      "snipe"
+      "Sends the last deleted message in this server")]))
 
 (cmd/defhandler reverse-command
   ["reverse"] 
@@ -87,9 +90,9 @@
          cmp/connection id token 4
          :data {:embeds [{:description (str "Let's continue this conversation in "
                                             (fmt/mention-channel channel)
-                                            " ([link]("
-                                            msg-url
-                                            "))")
+                                            " ("
+                                            (fmt/embed-link "link" msg-url)
+                                            ")")
                           :color 0x4e87e6}]
          :components [(cmps/action-row
                        (cmps/link-button
@@ -105,18 +108,33 @@
            cmp/connection channel message-id
            :embed {:description (str "Continuing the conversation from "
                                      (fmt/mention-channel message-chan)
-                                     " ([link]("
-                                     slash-url
-                                     "))")
+                                     " ("
+                                     (fmt/embed-link "link" msg-url)
+                                     ")")
                    :color 0x4e87e6}
            :components [(cmps/action-row
                          (cmps/link-button
                           slash-url
                           :label "Link"))]))))))
 
+(cmd/defhandler snipe-command
+  ["snipe"]
+  {:keys [id token]}
+  _
+  (if
+      (= deleted-message 0)
+    (msg/create-interaction-response!
+     cmp/connection id token 4
+     :data {:content "There are no recent deleted messages"})
+    
+    (msg/create-interaction-response!
+     cmp/connection id token 4
+     :data {:content (format "The last deleted message is: %s" deleted-message)})))
+
 (cmd/defpaths command-paths
   reverse-command
   avatar-command
-  move-command)
+  move-command
+  snipe-command)
 
 (msg/bulk-overwrite-global-application-commands! cmp/connection (cmp/config :application-id) commands)

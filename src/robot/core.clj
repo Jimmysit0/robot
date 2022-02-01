@@ -12,7 +12,8 @@
 (defn -main
   [& _args]
   (let [channel (a/chan (a/buffer 100))
-        conn-chan (con/connect-bot! (components/config :token) channel :intents #{})]
+        conn-chan (con/connect-bot! (components/config :token) channel
+                                    :intents #{:guild-messages})]
     (dsc-evts/message-pump! channel evts/event-handler)
     (msg/stop-connection! components/connection)
     (con/disconnect-bot! conn-chan)
