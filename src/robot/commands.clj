@@ -17,7 +17,7 @@
                                    "The desired size" :integer :required true
                                    :choices (map #(zipmap [:name :value] (repeat %)) (->> 16 (iterate #(* 2 %)) (take 9))))
         text-channel-option (stc/option "channel"
-                                        "The desired channel" :channel :channel-types [[:guild-text]]
+                                        "The desired channel" :channel :channel-types [:guild-text]
                                         :required true)]
     [(stc/command
      "reverse"
@@ -69,67 +69,72 @@
 
 (cmd/defhandler move-command
   ["move"]
-  {:keys [id token] :as data}
+  {:keys [id token channel-id guild-id] :as data}
   [channel]
-  (let [message-chan (get data :channel-id)
-        guild-id (get data :guild-id)]
-    (if
-        (= channel message-chan)
+  (if
+      (= channel channel-id)
+    (msg/create-interaction-response!
+     cmp/connection id token 4
+     :data {:embeds [{:description "Can't move the conversation to the same channel"
+                      :color 0xFF0000}]})
+      
+    (let [message-id (get (deref (msg/create-message!                            
+                                  cmp/connection channel
+                                  :embed {:description (format "Continuing the conversation from %s"
+                                                               (fmt/mention-channel channel-id))}))
+                          :id)
+          msg-url (str "https://discord.com/channels/" guild-id "/" channel "/" message-id)]
       (msg/create-interaction-response!
        cmp/connection id token 4
-       :data {:embeds [{:description "Can't move the conversation to the same channel"
-                       :color 0x4e87e6}]})
-      
-      (let [message-id (get (deref (msg/create-message!
-                                    cmp/connection channel
-                                    :embed {:description (format "Continuing the conversation from %s"
-                                                                 (fmt/mention-channel message-chan))}))
-                            :id)
-            msg-url (str "https://discord.com/channels/" guild-id "/" channel "/" message-id)]
-        (msg/create-interaction-response!
-         cmp/connection id token 4
-         :data {:embeds [{:description (str "Let's continue this conversation in "
-                                            (fmt/mention-channel channel)
-                                            " ("
-                                            (fmt/embed-link "link" msg-url)
-                                            ")")
-                          :color 0x4e87e6}]
+       :data {:embeds [{:description (str "Let's continue this conversation in "
+                                          (fmt/mention-channel channel)
+                                          " ("
+                                          (fmt/embed-link "link" msg-url)
+                                          ")")
+                        :color 0x4e87e6}]
+              :components [(cmps/action-row
+                            (cmps/link-button
+                             msg-url
+                             :label "Link"))]})
+      (let [slash-id (get (deref (msg/get-original-interaction-response!
+                                  cmp/connection
+                                  (cmp/config :application-id)
+                                  (get data :token)))
+                          :id)
+            slash-url (str "https://discord.com/channels/" guild-id "/" channel-id "/" slash-id)]
+        
+        (msg/edit-message!
+         cmp/connection channel message-id
+         :embed {:description (str "Continuing the conversation from "
+                                   (fmt/mention-channel channel-id)
+                                   " ("
+                                   (fmt/embed-link "link" msg-url)
+                                   ")")
+                 :color 0x4e87e6}
          :components [(cmps/action-row
                        (cmps/link-button
-                        msg-url
-                        :label "Link"))]})
-        (let [slash-id (get (deref (msg/get-original-interaction-response!
-                                    cmp/connection
-                                    (cmp/config :application-id)
-                                    (get data :token)))
-                            :id)
-              slash-url (str "https://discord.com/channels/" guild-id "/" message-chan "/" slash-id)]
-          (msg/edit-message!
-           cmp/connection channel message-id
-           :embed {:description (str "Continuing the conversation from "
-                                     (fmt/mention-channel message-chan)
-                                     " ("
-                                     (fmt/embed-link "link" msg-url)
-                                     ")")
-                   :color 0x4e87e6}
-           :components [(cmps/action-row
-                         (cmps/link-button
-                          slash-url
-                          :label "Link"))]))))))
+                        slash-url
+                        :label "Link"))])))))
 
 (cmd/defhandler snipe-command
   ["snipe"]
-  {:keys [id token]}
+  {:keys [id token guild-id]}
   _
-  (if
-      (= deleted-message 0)
+  (let [latest-deleted-message (get (deref cmp/deleted-messages) guild-id)]
+    (if
+        (contains? (deref cmp/deleted-messages) guild-id)
     (msg/create-interaction-response!
      cmp/connection id token 4
-     :data {:content "There are no recent deleted messages"})
-    
+     :data {:embeds
+            [{:description (format "Author: %s " (get latest-deleted-message :user))
+              :color 0x4e87e6
+              :fields [{:name (format "Message content: %s" (get latest-deleted-message :content))
+                        :value "Gotcha!"
+                        :inline true}]}]})
     (msg/create-interaction-response!
      cmp/connection id token 4
-     :data {:content (format "The last deleted message is: %s" deleted-message)})))
+     :data {:embeds [{:description "There are no recent deleted messages in this server"
+                      :color 0xFF0000}]}))))
 
 (cmd/defpaths command-paths
   reverse-command
